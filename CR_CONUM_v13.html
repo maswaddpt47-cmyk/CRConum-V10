@@ -625,13 +625,13 @@
   .aide-wrap { position: relative; display: inline-block; }
   .aide-btn {
     width: 26px; height: 26px; border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.4);
-    background: rgba(255,255,255,0.15);
-    color: white; font-size: 0.8rem; font-weight: 700;
+    border: none;
+    background: white;
+    color: var(--bleu); font-size: 0.8rem; font-weight: 700;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s; flex-shrink: 0;
+    transition: opacity 0.2s; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   }
-  .aide-btn:hover { background: rgba(255,255,255,0.3); }
+  .aide-btn:hover { opacity: 0.85; }
   .aide-tooltip {
     display: none;
     position: absolute; top: calc(100% + 10px); right: 0;
