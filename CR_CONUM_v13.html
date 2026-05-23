@@ -620,6 +620,57 @@
   .draft-del:hover { color: #c0392b; background: #fdf0ef; }
   .modal-footer { display:flex; justify-content:flex-end; margin-top:1rem; padding-top:0.75rem; border-top:1px solid #e8edf3; }
 
+
+  /* ── TOOLTIP AIDE ────────────────────────────────────────── */
+  .aide-wrap { position: relative; display: inline-block; }
+  .aide-btn {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.15);
+    color: white; font-size: 0.8rem; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s; flex-shrink: 0;
+  }
+  .aide-btn:hover { background: rgba(255,255,255,0.3); }
+  .aide-tooltip {
+    display: none;
+    position: absolute; top: calc(100% + 10px); right: 0;
+    width: 310px; background: white;
+    border-radius: 10px; box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+    padding: 1rem 1.1rem; z-index: 300;
+    border-top: 3px solid var(--bleu);
+    animation: fadeIn 0.15s;
+  }
+  .aide-wrap:hover .aide-tooltip,
+  .aide-wrap:focus-within .aide-tooltip { display: block; }
+  .aide-tooltip::before {
+    content: ''; position: absolute; top: -8px; right: 10px;
+    border: 8px solid transparent;
+    border-bottom-color: var(--bleu);
+    border-top: none;
+  }
+  .aide-tooltip h4 {
+    font-size: 0.78rem; font-weight: 700; color: var(--bleu);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 0 0 0.6rem; padding-bottom: 0.4rem;
+    border-bottom: 1px solid #e8edf3;
+  }
+  .aide-tooltip ul {
+    margin: 0; padding: 0 0 0 1rem; list-style: disc;
+  }
+  .aide-tooltip li {
+    font-size: 0.8rem; color: #444; line-height: 1.55;
+    margin-bottom: 0.35rem;
+  }
+  .aide-tooltip li strong { color: var(--bleu); }
+  .aide-tooltip .aide-ex {
+    margin-top: 0.7rem; padding: 0.5rem 0.7rem;
+    background: #f5f9ff; border-radius: 6px;
+    border-left: 3px solid var(--bleu-clair);
+    font-size: 0.76rem; color: #555; line-height: 1.6;
+  }
+  .aide-tooltip .aide-ex strong { display: block; color: var(--bleu); margin-bottom: 0.2rem; font-size: 0.73rem; }
+
 </style>
 </head>
 <body>
@@ -739,6 +790,26 @@
       <span id="draft-indicator" style="display:none;font-size:0.72rem;color:#aaa;margin-right:0.25rem;cursor:pointer" title="Brouillon auto-sauvegardé — cliquer pour effacer" onclick="if(confirm('Effacer le brouillon sauvegardé ?')) effacerBrouillon()"></span>
       <span class="mode-indicator" id="mode-indicator"></span>
       <button class="btn btn-outline btn-sm" onclick="ouvrirModalBrouillons()" id="btn-brouillons" style="display:none">📂 Brouillons</button>
+      <div class="aide-wrap" tabindex="0">
+        <button class="aide-btn" aria-label="Aide saisie">?</button>
+        <div class="aide-tooltip">
+          <h4>📝 Bonnes pratiques de saisie</h4>
+          <ul>
+            <li><strong>Une idée par ligne</strong> — saut de ligne entre chaque point</li>
+            <li><strong>Verbe d'action</strong> pour les décisions : <em>éviter, contacter, valider, préparer, relancer…</em></li>
+            <li><strong>Notes brutes acceptées</strong> — pas besoin de rédiger, l'IA reformule</li>
+            <li><strong>Éviter un seul long bloc</strong> sans saut de ligne</li>
+            <li><strong>Abréviations</strong> comprises par l'IA, pas besoin de les expliciter</li>
+          </ul>
+          <div class="aide-ex">
+            <strong>✅ Exemple</strong>
+            Bilan formation — 3 sessions réalisées<br>
+            Participation satisfaisante<br>
+            Relancer les agents non inscrits<br>
+            Préparer rapport pour prochaine réunion
+          </div>
+        </div>
+      </div>
       <button class="btn btn-outline btn-sm" onclick="retourAccueil()">← Accueil</button>
     </div>
   </header>
