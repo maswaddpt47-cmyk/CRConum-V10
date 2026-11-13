@@ -30,7 +30,8 @@ git push origin HEAD
 « pages build and deployment », site `maswaddpt47-cmyk.github.io`). **Constat du
 13/11/2026** : les pushes de la session (`2e74931` à `434a195`) n'ont déclenché
 aucune construction (cause inconnue ; dernière le 23/05/2026), le téléphone
-servait l'ancienne page. Ne jamais écrire « en ligne » sans une construction
+servait l'ancienne page. Déblocage : Settings → Pages, Branch « None » puis
+« main » / root (construction réussie sur `7191268`). Ne jamais écrire « en ligne » sans une construction
 réussie **sur le SHA poussé** (MD-LIB `deploiement.md`).
 
 ## Tests

@@ -1,17 +1,12 @@
 # CHANTIERS — CRConum-V10
 
-État au **13/11/2026**, base `2e74931` (`main`).
+État au **13/11/2026**, base `7191268` (`main`, en ligne : Pages réussi).
 
 ## Ce qu'est le projet
 
 Voir `CLAUDE.md`. Publication : toujours sur `main` (décision du 13/11/2026).
 AGORA installée le 13/11/2026 (`AGORA.md`, section « AGORA » de `CLAUDE.md`) :
 chaque décision à trancher est candidate à un bloc.
-
-## En cours (13/11/2026)
-
-- Règle 69 testée sur téléphone : échec, mais sur l'**ancienne** page (Pages non
-  reconstruit). Reconstruction demandée à l'utilisateur, puis nouvel essai.
 
 ## Décisions à trancher
 
@@ -33,6 +28,9 @@ Aucune au 13/11/2026.
   écouteur `submit` (en fin de script) : ne pas remettre `onkeydown`/`onclick`,
   sinon `startLive()` part deux fois. Vérifié dans Chromium le 13/11/2026 avec
   un faux mot de passe : un appel par Entrée, page non rechargée, rien ne
-  déborde à 390 px. Proton Pass sur téléphone : non vérifié.
+  déborde à 390 px. **Proton Pass sur téléphone : fonctionne** (confirmé par
+  l'utilisateur le 13/11/2026, après reconstruction de Pages).
 - « Sur `main` » ne veut pas dire « en ligne » : vérifier une construction Pages
-  réussie sur le SHA poussé (aucune déclenchée par les pushes du 13/11/2026).
+  réussie sur le SHA poussé. Le 13/11/2026, aucun push de la session n'en a
+  déclenché ; débloqué par l'utilisateur : Settings → Pages, Branch « None »
+  puis « main » / root.
