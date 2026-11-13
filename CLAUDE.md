@@ -26,9 +26,12 @@ git merge-base --is-ancestor origin/main HEAD && git push origin HEAD:main
 git push origin HEAD
 ```
 
-**Déploiement** : aucun workflow GitHub Actions vu pour ce dépôt au 13/11/2026
-(push de `2e74931`). Ne jamais écrire « en ligne » sans le ✅ du vérificateur
-(MD-LIB `deploiement.md`) ; sans workflow, dire « sur `main` », pas « en ligne ».
+**Déploiement** : GitHub Pages depuis `main` (construction automatique
+« pages build and deployment », site `maswaddpt47-cmyk.github.io`). **Constat du
+13/11/2026** : les pushes de la session (`2e74931` à `434a195`) n'ont déclenché
+aucune construction (cause inconnue ; dernière le 23/05/2026), le téléphone
+servait l'ancienne page. Ne jamais écrire « en ligne » sans une construction
+réussie **sur le SHA poussé** (MD-LIB `deploiement.md`).
 
 ## Tests
 
