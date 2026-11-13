@@ -89,6 +89,11 @@ plateforme (le signaler une fois, puis continuer le reste).
 
 - Respecter le workflow du projet, sa branche par défaut et les contraintes
   de la plateforme. Ne pas imposer `main` à un dépôt configuré autrement.
+- **Main toujours** (décision de l’utilisateur du 13/11/2026, MD-LIB
+  `git-workflow.md` §3) : chaque livraison vérifiée part en avance rapide sur
+  `main`, même depuis une branche imposée, sans redemander :
+  `git fetch origin main`, puis `git merge-base --is-ancestor origin/main HEAD
+  && git push origin HEAD:main`. Si `main` a divergé : fusion, jamais `rebase`.
 - Un commit conventionnel en français par modification logique. Aucun
   force-push ni écrasement d’un changement concurrent.
 - Juste avant de modifier un fichier partagé, actualiser et relire son état.
