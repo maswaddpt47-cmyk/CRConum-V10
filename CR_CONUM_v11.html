@@ -23719,14 +23719,16 @@ var __async = (__this, __arguments, generator) => {
     <div class="mode-block">
       <h3 style="color:var(--bleu)">Avec clé API Anthropic</h3>
       <p>Reformulation par intelligence artificielle réelle. Résultats de haute qualité.</p>
+      <form id="mdp-form" autocomplete="on" action="#" style="margin:0">
+      <input type="text" name="username" autocomplete="username" value="CR CONUM - clé Anthropic"
+        readonly tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px">
       <label for="mdp-input">Mot de passe</label>
-      <input type="password" id="mdp-input" placeholder="••••••••••" autocomplete="off"
-        onkeydown="if(event.key==='Enter') startLive()">
+      <input type="password" id="mdp-input" name="password" placeholder="••••••••••" autocomplete="current-password">
       <p id="mdp-error" style="color:#e53935;font-size:0.82rem;margin:0.25rem 0 0;display:none">
         ✗ Mot de passe incorrect
       </p>
-      <button class="btn btn-bleu" style="width:100%;justify-content:center;margin-top:0.75rem"
-        onclick="startLive()">Démarrer avec l'IA →</button>
+      <button type="submit" class="btn btn-bleu" style="width:100%;justify-content:center;margin-top:0.75rem">Démarrer avec l'IA →</button>
+      </form>
     </div>
 
     <p style="margin-top:1rem;font-size:0.75rem;color:#aaa;text-align:center">
@@ -24919,7 +24921,9 @@ function showToast(msg) {
 }
 
 // Entrée avec Enter sur le champ clé
-// Listener Enter géré inline sur #mdp-input
+// Formulaire de connexion (règle 69) : Entrée et bouton passent par submit,
+// ce qui permet au gestionnaire de mots de passe de proposer et d'enregistrer le mot de passe.
+document.getElementById('mdp-form').addEventListener('submit', e => { e.preventDefault(); startLive(); });
 </script>
 </body>
 </html>
