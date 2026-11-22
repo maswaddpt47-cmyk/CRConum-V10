@@ -14,6 +14,25 @@ Aucune au 13/11/2026.
 
 ## Pistes
 
+- *Proposée (22/11/2026)* — **Protéger les brouillons à l'ouverture.** Sur la
+  page d'accueil et les pages v10 à v12, « Annuler » à la question de reprise
+  efface le brouillon (reproduit dans Chromium avec un brouillon fictif).
+  En v13, le chargement d'un ancien brouillon remplace la liste existante et
+  supprime la source avant l'écriture (reproduit avec un stockage fictif).
+  Garder le brouillon tant qu'aucune suppression explicite n'est confirmée.
+  En v13, réunir les brouillons sans doublon et vérifier l'enregistrement
+  avant de retirer l'ancienne copie. Cela évite de perdre des notes en
+  ouvrant l'outil. Prévoir 1 à 2 jours, reprise et essais compris, en
+  conservant les formats actuels.
+
+- *Proposée (22/11/2026)* — **Fiabiliser le bilan de « Reformuler tout ».**
+  Dans les cinq pages, un appel fictif en échec a déclenché un message
+  d'erreur suivi de « 1 section reformulée ✓ », avec un résultat vide.
+  Compter les réussites, signaler les sections en échec et permettre de les
+  relancer avec leur bouton existant. Cela évite de prendre un compte rendu
+  incomplet pour un résultat prêt à relire. Prévoir 2 à 4 h en conservant l'API
+  et l'export actuels.
+
 - *Proposée, en attente (13/11/2026)* — la clé API chiffrée est dans des pages
   publiques : sa solidité ne dépend que du mot de passe (essais hors ligne
   possibles). Faire contredire par Codex (bloc de sécurité) avant de décider
