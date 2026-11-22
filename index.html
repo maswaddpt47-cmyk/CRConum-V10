@@ -23791,6 +23791,16 @@ var __async = (__this, __arguments, generator) => {
   </div>
 </div>
 
+<dialog id="draft-choice" aria-labelledby="draft-choice-title" style="margin:auto;width:calc(100% - 2rem);max-width:28rem;padding:1.25rem;border:1px solid #dde3ec;border-radius:8px">
+  <h2 id="draft-choice-title" style="font-size:1rem;margin-bottom:0.5rem">Un brouillon est disponible</h2>
+  <p id="draft-choice-info" style="margin-bottom:1rem"></p>
+  <form method="dialog" style="display:flex;flex-wrap:wrap;gap:0.5rem">
+    <button class="btn btn-bleu btn-sm" value="reprendre" autofocus>Reprendre</button>
+    <button class="btn btn-outline btn-sm" value="annuler">Annuler</button>
+    <button class="btn btn-danger btn-sm" value="supprimer">Supprimer et commencer</button>
+  </form>
+</dialog>
+
 <!-- ═══ APP PRINCIPALE ══════════════════════════════════════════ -->
 <div id="app" style="display:none">
 
@@ -23826,6 +23836,8 @@ var __async = (__this, __arguments, generator) => {
       <button class="btn btn-outline btn-sm" onclick="retourAccueil()">← Accueil</button>
     </div>
   </header>
+
+  <p id="draft-error" role="status" hidden style="background:#fff3db;color:#713d00;padding:0.55rem 1rem"></p>
 
   <!-- Bannière démo -->
   <div id="demo-banner" style="display:none">
@@ -24069,25 +24081,49 @@ async function startLive() {
 }
 
 function lancerApp() {
+  brouillonNonSauvegarde = false;
+  afficherErreurBrouillon();
+  const draft = chargerBrouillon();
+  if (!draft) {
+    ouvrirEditeurBrouillon();
+    return;
+  }
+
+  const dialog = document.getElementById('draft-choice');
+  const date = new Date(draft.savedAt);
+  document.getElementById('draft-choice-info').textContent = Number.isNaN(date.getTime())
+    ? 'Vous pouvez reprendre votre brouillon ou le supprimer pour commencer un compte rendu.'
+    : `Brouillon enregistré le ${date.toLocaleString('fr-FR')}.`;
+  dialog.returnValue = '';
+  dialog.addEventListener('close', () => {
+    if (dialog.returnValue === 'reprendre') {
+      ouvrirEditeurBrouillon(draft);
+    } else if (dialog.returnValue === 'supprimer' && effacerBrouillon()) {
+      ouvrirEditeurBrouillon();
+    } else {
+      API_KEY = '';
+      MODE_DEMO = false;
+    }
+  }, { once: true });
+  dialog.showModal();
+}
+
+function ouvrirEditeurBrouillon(draft) {
   document.getElementById('accueil-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-
-  const draft = chargerBrouillon();
-  if (draft && (draft.animateur || draft.redacteur || draft.paragraphes?.some(p => p.notes || p.reformule))) {
-    const d    = new Date(draft.savedAt);
-    const info = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
-               + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    if (confirm(`Un brouillon a été trouvé (${info}).\n\nReprendre ce brouillon ?`)) {
-      restaurerBrouillon(draft);
-      attacherListenersMeta();
-      return;
-    }
-    effacerBrouillon();
+  document.getElementById('draft-indicator').style.display = 'none';
+  if (draft) {
+    restaurerBrouillon(draft);
+    attacherListenersMeta();
+    return;
   }
 
   paragraphes   = [];
   paraIdCounter = 0;
   document.getElementById('paragraphes-container').innerHTML = '';
+  document.getElementById('f-animateur').value = '';
+  document.getElementById('f-redacteur').value = '';
+  document.getElementById('autres-input').value = '';
   const cfg = chargerConfig();
   cfg.paraFixes.forEach(nom => addParagraphe(nom, true));
   document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
@@ -24102,7 +24138,9 @@ function retourAccueil() {
     || document.getElementById('f-animateur')?.value.trim()
     || document.getElementById('f-redacteur')?.value.trim();
 
-  if (aDesContenu && !confirm('Retourner à l\'accueil ?\n\nVotre brouillon est sauvegardé et pourra être restauré à la prochaine session.')) return;
+  if (brouillonNonSauvegarde) {
+    if (!confirm('Certaines modifications ne sont pas sauvegardées. Revenir quand même à l’accueil ?')) return;
+  } else if (aDesContenu && !confirm('Retourner à l\'accueil ?\n\nVotre brouillon est sauvegardé et pourra être restauré à la prochaine session.')) return;
 
   document.getElementById('accueil-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
@@ -24240,9 +24278,16 @@ function autoSizeInput(el) {
 
 // ─── BROUILLON (localStorage) ──────────────────────────────────
 const DRAFT_KEY = 'cr_conum_draft';
+let brouillonStocke = null;
+let brouillonNonSauvegarde = false;
 
 function sauvegarderBrouillon() {
   try {
+    if (localStorage.getItem(DRAFT_KEY) !== brouillonStocke) {
+      afficherErreurBrouillon('Brouillon non sauvegardé. Le brouillon de ce navigateur a changé. Gardez cette page ouverte et copiez vos notes avant de la recharger.');
+      brouillonNonSauvegarde = true;
+      return;
+    }
     const draft = {
       savedAt      : new Date().toISOString(),
       date         : document.getElementById('f-date')?.value || '',
@@ -24254,22 +24299,57 @@ function sauvegarderBrouillon() {
       paragraphes  : paragraphes.map(p => ({ ...p })),
       paraIdCounter
     };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    const contenu = JSON.stringify(draft);
+    localStorage.setItem(DRAFT_KEY, contenu);
+    brouillonStocke = contenu;
+    brouillonNonSauvegarde = false;
+    afficherErreurBrouillon();
     afficherIndicateurSauvegarde();
-  } catch(e) { /* silencieux */ }
+  } catch {
+    brouillonNonSauvegarde = true;
+    afficherErreurBrouillon('Brouillon non sauvegardé. Gardez cette page ouverte et copiez vos notes avant de la fermer.');
+  }
 }
 
 function chargerBrouillon() {
+  brouillonStocke = null;
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
+    if (raw === null) return null;
+    const draft = JSON.parse(raw);
+    if (!draft || !Array.isArray(draft.paragraphes)) throw new Error();
+    brouillonStocke = raw;
+    return draft;
+  } catch {
+    afficherErreurBrouillon('Le brouillon enregistré ne peut pas être lu. Tout nouveau texte peut rester non sauvegardé.');
+    return null;
+  }
 }
 
 function effacerBrouillon() {
-  localStorage.removeItem(DRAFT_KEY);
-  const ind = document.getElementById('draft-indicator');
-  if (ind) ind.style.display = 'none';
+  try {
+    if (localStorage.getItem(DRAFT_KEY) !== brouillonStocke) {
+      showToast('Le brouillon a changé. Recommencez depuis l’accueil.');
+      return false;
+    }
+    localStorage.removeItem(DRAFT_KEY);
+    brouillonStocke = null;
+    document.getElementById('draft-indicator').style.display = 'none';
+    if (document.getElementById('app').style.display === 'block') {
+      brouillonNonSauvegarde = true;
+      afficherErreurBrouillon('Brouillon supprimé. Le texte reste dans l’éditeur jusqu’à sa fermeture.');
+    }
+    return true;
+  } catch {
+    showToast('Impossible de supprimer le brouillon.');
+    return false;
+  }
+}
+
+function afficherErreurBrouillon(message = '') {
+  const etat = document.getElementById('draft-error');
+  etat.textContent = message;
+  etat.hidden = !message;
 }
 
 function restaurerBrouillon(draft) {
