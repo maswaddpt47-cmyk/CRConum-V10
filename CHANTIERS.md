@@ -1,6 +1,6 @@
 # CHANTIERS — CRConum-V10
 
-État au **22/11/2026**, code jusqu’à `c3b1d41`.
+État au **22/11/2026**, code jusqu’à `e77890f`.
 
 ## Ce qu'est le projet
 
@@ -11,8 +11,12 @@ chaque décision à trancher est candidate à un bloc.
 ## Décisions à trancher
 
 Les deux corrections ont été validées par l’utilisateur le 22/11/2026.
-Les blocs [AG-001 et AG-002](AGORA.md#blocs-ouverts) attendent la relecture de
-Claude.
+Claude a rendu deux verdicts « amendé » au commit `e7d99fe`. Les deux écarts
+reproduits ont été corrigés et vérifiés avec des données fictives dans Chromium.
+Les blocs [AG-001 et AG-002](AGORA.md#blocs-ouverts) restent ouverts pour décision.
+Le téléchargement de secours conserve la valeur brute. Le retrait exige une
+confirmation. Le bilan de reformulation affiche la cause et arrête le lot
+après un refus d’accès.
 
 ## Contrôles et reprise
 
