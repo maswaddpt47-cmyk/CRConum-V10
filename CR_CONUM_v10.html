@@ -24676,7 +24676,8 @@ function libelleReformulation(para) {
   return reformulationsARelancer.has(para) ? '✦ Réessayer' : '✦ Reformuler';
 }
 
-async function reformulerPara(id, enLot = false) {
+async function reformulerPara(id, lot = null) {
+  const enLot = lot !== null;
   const para = paragraphes.find(p => p.id === id);
   if (!para || !para.notes.trim()) {
     if (!enLot) showToast('Saisissez des notes avant de reformuler.');
@@ -24717,7 +24718,13 @@ async function reformulerPara(id, enLot = false) {
   } catch (e) {
     if (paragraphes.includes(para)) {
       reformulationsARelancer.add(para);
-      if (!enLot) showToast('Erreur : ' + e.message);
+      const cause = e instanceof TypeError ? 'Connexion à Anthropic impossible.' : e.message;
+      if (enLot) {
+        lot.cause ??= cause;
+        if (e.status === 401 || e.status === 403) lot.accesRefuse = cause;
+      } else {
+        showToast('Erreur : ' + cause);
+      }
     }
     return false;
   } finally {
@@ -24742,30 +24749,39 @@ async function reformulerTout() {
     return;
   }
   btn.disabled = true;
-  let reussites = 0;
+  const reussites = new Set();
+  const lot = { cause: null, accesRefuse: null };
 
   try {
     for (const [index, para] of aReformuler.entries()) {
       btn.innerHTML = `<span class="spinner"></span> ${index + 1}/${aReformuler.length}`;
-      if (paragraphes.includes(para) && await reformulerPara(para.id, true)) reussites++;
+      if (paragraphes.includes(para) && await reformulerPara(para.id, lot)) reussites.add(para);
+      if (lot.accesRefuse) break;
     }
   } finally {
     btn.disabled = false;
     btn.textContent = '✦ Reformuler tout';
   }
 
-  if (!aReformuler.some(para => paragraphes.includes(para))) return;
+  const presentes = aReformuler.filter(para => paragraphes.includes(para));
+  if (!presentes.length) return;
+  const nombre = presentes.filter(para => reussites.has(para)).length;
 
-  const pluriel = reussites > 1 ? 's' : '';
-  const sectionsReformulees = `${reussites} section${pluriel} reformulée${pluriel}`;
-  if (reussites === aReformuler.length) {
+  const pluriel = nombre > 1 ? 's' : '';
+  const sectionsReformulees = `${nombre} section${pluriel} reformulée${pluriel}`;
+  if (nombre === presentes.length && !lot.accesRefuse) {
     showToast(`${sectionsReformulees} ✓`);
     return;
   }
 
-  const bilan = reussites === 0 ? 'Aucune section reformulée.' : `${sectionsReformulees} sur ${aReformuler.length}.`;
+  const bilan = nombre === 0 ? 'Aucune section reformulée.' : `${sectionsReformulees} sur ${presentes.length}.`;
   const aRelancer = aReformuler.some(para => paragraphes.includes(para) && reformulationsARelancer.has(para));
-  showToast(bilan + (aRelancer ? ' Utilisez « Réessayer » dans les sections signalées.' : ''));
+  const cause = lot.accesRefuse || lot.cause;
+  if (lot.accesRefuse) {
+    showToast(bilan + ' ' + cause + ' Le lot a été arrêté.');
+    return;
+  }
+  showToast(bilan + (cause ? ' ' + cause : '') + (aRelancer ? ' Utilisez « Réessayer » dans les sections signalées.' : ''));
 }
 
 // ── MODE DÉMO : reformulation locale ───────────────────────────
@@ -24824,8 +24840,14 @@ Retourne uniquement les bullets, sans titre ni commentaire.`;
   });
 
   if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error?.message || `HTTP ${response.status}`);
+    const causes = {
+      401: 'Clé Anthropic refusée (HTTP 401).',
+      403: 'Accès Anthropic interdit (HTTP 403).',
+      429: 'Limite de requêtes Anthropic atteinte (HTTP 429).'
+    };
+    throw Object.assign(new Error(causes[response.status] || `Erreur Anthropic (HTTP ${response.status}).`), {
+      status: response.status
+    });
   }
 
   const data = await response.json();
