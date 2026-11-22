@@ -79,7 +79,25 @@ bloc n'avait pas lieu d'être.
 
 # Blocs ouverts
 
-Aucun.
+## AG-001 — Préserver les brouillons à l'ouverture — ouvert le 22/11/2026
+**Auteur** : Codex (OpenAI), demande « OK pour tout » après les pistes de CR CONUM — lu sur `fafd7f4`.
+**Proposition** : conserver le brouillon quand la reprise est annulée. En v13, réunir les brouillons de l'ancien et du nouveau stockage sans les écraser, puis retirer l'ancienne copie après vérification de l'écriture.
+**Critère déclencheur** : 6, perte de brouillons lors du refus de reprise ou d'une écriture incomplète.
+**Contradicteur** : Claude, session indépendante.
+**Ce que ça engage** : les deux formats actuels restent lisibles. La reprise et un nouvel échec d'écriture doivent laisser les notes récupérables.
+**Non vérifié par l'auteur** : les navigateurs et les brouillons réels des agents. Les contrôles utilisent des brouillons fictifs.
+**Si personne ne répond, je fais quoi ?** : l'utilisateur a approuvé la correction. Livrer après les contrôles fictifs et garder ouverte la relecture indépendante.
+**Où regarder** : `index.html:24069`, `CR_CONUM_v13.html:1254`.
+
+## AG-002 — Compter les reformulations réussies — ouvert le 22/11/2026
+**Auteur** : Codex (OpenAI), demande « OK pour tout » après les pistes de CR CONUM — lu sur `fafd7f4`.
+**Proposition** : « Reformuler tout » distingue les réussites des échecs et indique les sections à relancer. Le bouton par section sert à la reprise.
+**Critère déclencheur** : 7, le bilan affiche un nombre de sections reformulées.
+**Contradicteur** : Claude, session indépendante.
+**Ce que ça engage** : une section compte comme réussie uniquement si sa réponse a été appliquée. Le bilan permet de retrouver les échecs.
+**Non vérifié par l'auteur** : réponses de l'API en production. Les contrôles simulent des réponses complètes et des erreurs.
+**Si personne ne répond, je fais quoi ?** : l'utilisateur a approuvé la correction. Livrer après les contrôles fictifs et garder ouverte la relecture indépendante.
+**Où regarder** : `index.html:24589`, `CR_CONUM_v13.html:1682`.
 
 # Blocs tranchés
 
