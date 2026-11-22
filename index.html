@@ -23656,7 +23656,9 @@ var __async = (__this, __arguments, generator) => {
     pointer-events: none;
     transition: all 0.3s;
     z-index: 999;
-    white-space: nowrap;
+    width: max-content;
+    max-width: calc(100% - 2rem);
+    overflow-wrap: anywhere;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -24477,7 +24479,8 @@ function renderParagraphe(para) {
       </div>
       <div class="para-actions">
         <button class="btn btn-bleu btn-sm" id="btn-refo-${para.id}"
-          onclick="reformulerPara(${para.id})">✦ Reformuler</button>
+          ${reformulationsEnCours.has(para) ? 'disabled' : ''}
+          onclick="reformulerPara(${para.id})">${libelleReformulation(para)}</button>
         <button class="btn btn-danger" onclick="removeParagraphe(${para.id})">✕</button>
       </div>
     </div>
@@ -24586,35 +24589,67 @@ function reRenderAll() {
 }
 
 // ─── REFORMULATION ─────────────────────────────────────────────
-async function reformulerPara(id) {
+const reformulationsEnCours = new Set();
+const reformulationsARelancer = new WeakSet();
+
+function libelleReformulation(para) {
+  return reformulationsARelancer.has(para) ? '✦ Réessayer' : '✦ Reformuler';
+}
+
+async function reformulerPara(id, enLot = false) {
   const para = paragraphes.find(p => p.id === id);
   if (!para || !para.notes.trim()) {
-    showToast('Saisissez des notes avant de reformuler.');
-    return;
+    if (!enLot) showToast('Saisissez des notes avant de reformuler.');
+    return false;
   }
+  if (reformulationsEnCours.has(para) || (!enLot && document.getElementById('btn-refo-tout').disabled)) {
+    if (!enLot) showToast('Une reformulation est déjà en cours.');
+    return false;
+  }
+
   const btn = document.getElementById(`btn-refo-${id}`);
+  if (!btn) return false;
+  const { titre, notes } = para;
+  reformulationsEnCours.add(para);
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> En cours…';
 
   try {
     const result = MODE_DEMO
-      ? await reformulerDemo(para.notes)
-      : await callAI(para.titre, para.notes);
+      ? await reformulerDemo(notes)
+      : await callAI(titre, notes);
+    if (!paragraphes.includes(para)) return false;
+    if (para.titre !== titre || para.notes !== notes) {
+      throw new Error('La section a changé. Relancez la reformulation.');
+    }
+    if (!result.trim()) throw new Error('La reformulation reçue est vide.');
 
-    para.reformule = result;
-    sauvegarderBrouillon();
     const zone  = document.getElementById(`refo-zone-${id}`);
     const refoEl = document.getElementById(`refo-${id}`);
+    para.reformule = result;
     refoEl.innerHTML = result.replace(/\n/g, '<br>');
     zone.style.display = 'block';
     zone.classList.add('refo-zone-open');
-    showToast('Reformulation effectuée ✓');
-  } catch(e) {
-    showToast('Erreur : ' + e.message);
+    sauvegarderBrouillon();
+    reformulationsARelancer.delete(para);
+    if (!enLot) showToast('Reformulation effectuée ✓');
+    return true;
+  } catch (e) {
+    if (paragraphes.includes(para)) {
+      reformulationsARelancer.add(para);
+      if (!enLot) showToast('Erreur : ' + e.message);
+    }
+    return false;
+  } finally {
+    reformulationsEnCours.delete(para);
+    if (paragraphes.includes(para)) {
+      const boutonActuel = document.getElementById(`btn-refo-${id}`);
+      if (boutonActuel) {
+        boutonActuel.disabled = false;
+        boutonActuel.textContent = libelleReformulation(para);
+      }
+    }
   }
-
-  btn.disabled = false;
-  btn.innerHTML = '✦ Reformuler';
 }
 
 async function reformulerTout() {
@@ -24622,18 +24657,35 @@ async function reformulerTout() {
   if (aReformuler.length === 0) { showToast('Aucune note à reformuler.'); return; }
 
   const btn = document.getElementById('btn-refo-tout');
+  if (btn.disabled || reformulationsEnCours.size > 0) {
+    showToast('Une reformulation est déjà en cours.');
+    return;
+  }
   btn.disabled = true;
-  let done = 0;
+  let reussites = 0;
 
-  for (const para of aReformuler) {
-    btn.innerHTML = `<span class="spinner"></span> ${done}/${aReformuler.length}`;
-    await reformulerPara(para.id);
-    done++;
+  try {
+    for (const [index, para] of aReformuler.entries()) {
+      btn.innerHTML = `<span class="spinner"></span> ${index + 1}/${aReformuler.length}`;
+      if (paragraphes.includes(para) && await reformulerPara(para.id, true)) reussites++;
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✦ Reformuler tout';
   }
 
-  btn.disabled = false;
-  btn.innerHTML = '✦ Reformuler tout';
-  showToast(`${done} section${done > 1 ? 's' : ''} reformulée${done > 1 ? 's' : ''} ✓`);
+  if (!aReformuler.some(para => paragraphes.includes(para))) return;
+
+  const pluriel = reussites > 1 ? 's' : '';
+  const sectionsReformulees = `${reussites} section${pluriel} reformulée${pluriel}`;
+  if (reussites === aReformuler.length) {
+    showToast(`${sectionsReformulees} ✓`);
+    return;
+  }
+
+  const bilan = reussites === 0 ? 'Aucune section reformulée.' : `${sectionsReformulees} sur ${aReformuler.length}.`;
+  const aRelancer = aReformuler.some(para => paragraphes.includes(para) && reformulationsARelancer.has(para));
+  showToast(bilan + (aRelancer ? ' Utilisez « Réessayer » dans les sections signalées.' : ''));
 }
 
 // ── MODE DÉMO : reformulation locale ───────────────────────────
@@ -24912,11 +24964,13 @@ async function exportWord() {
 }
 
 // ─── TOAST ─────────────────────────────────────────────────────
+let toastTimeout;
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // Entrée avec Enter sur le champ clé
