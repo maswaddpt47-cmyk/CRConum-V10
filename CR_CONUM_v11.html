@@ -24280,10 +24280,16 @@ function autoSizeInput(el) {
 // ─── BROUILLON (localStorage) ──────────────────────────────────
 const DRAFT_KEY = 'cr_conum_draft';
 let brouillonStocke = null;
+let brouillonIllisible = false;
 let brouillonNonSauvegarde = false;
 
 function sauvegarderBrouillon() {
   try {
+    if (brouillonIllisible) {
+      afficherErreurBrouillon('Brouillon non sauvegardé. L’entrée précédente est illisible.');
+      brouillonNonSauvegarde = true;
+      return false;
+    }
     if (localStorage.getItem(DRAFT_KEY) !== brouillonStocke) {
       afficherErreurBrouillon('Brouillon non sauvegardé. Le brouillon de ce navigateur a changé. Gardez cette page ouverte et copiez vos notes avant de la recharger.');
       brouillonNonSauvegarde = true;
@@ -24314,15 +24320,19 @@ function sauvegarderBrouillon() {
 
 function chargerBrouillon() {
   brouillonStocke = null;
+  brouillonIllisible = false;
+  let raw;
   try {
-    const raw = localStorage.getItem(DRAFT_KEY);
+    raw = localStorage.getItem(DRAFT_KEY);
     if (raw === null) return null;
     const draft = JSON.parse(raw);
     if (!draft || !Array.isArray(draft.paragraphes)) throw new Error();
     brouillonStocke = raw;
     return draft;
   } catch {
-    afficherErreurBrouillon('Le brouillon enregistré ne peut pas être lu. Tout nouveau texte peut rester non sauvegardé.');
+    brouillonIllisible = typeof raw === 'string';
+    if (brouillonIllisible) proposerRecuperationBrouillon(DRAFT_KEY, raw, 'Brouillon');
+    afficherErreurBrouillon(brouillonIllisible ? 'Le brouillon enregistré est illisible.' : 'Le stockage du navigateur est inaccessible.');
     return null;
   }
 }
@@ -24345,6 +24355,52 @@ function effacerBrouillon() {
     showToast('Impossible de supprimer le brouillon.');
     return false;
   }
+}
+
+function proposerRecuperationBrouillon(cle, raw, titre) {
+  const id = 'recuperation-' + cle;
+  const panneau = document.getElementById('draft-error');
+  if (document.getElementById(id)) return;
+  const actions = document.createElement('div');
+  actions.id = id;
+  actions.style.padding = '0.55rem 1rem';
+  const texte = document.createElement('p');
+  texte.textContent = titre + ' illisible. Téléchargez une copie avant de retirer cette entrée.';
+  const copie = document.createElement('button');
+  copie.type = 'button';
+  copie.textContent = 'Télécharger une copie';
+  const retirer = document.createElement('button');
+  retirer.type = 'button';
+  retirer.textContent = 'Retirer l’entrée illisible';
+  retirer.disabled = true;
+  copie.onclick = () => {
+    const url = URL.createObjectURL(new Blob([raw], { type: 'application/octet-stream' }));
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = cle + '_illisible.txt';
+    lien.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    retirer.disabled = false;
+  };
+  retirer.onclick = () => {
+    if (!confirm('Avez-vous vérifié la copie téléchargée ? Confirmez pour retirer cette entrée du navigateur.')) return;
+    try {
+      if (localStorage.getItem(cle) !== raw) {
+        showToast('L’entrée a changé. Copiez vos notes en cours avant de recharger la page.');
+        return;
+      }
+      localStorage.removeItem(cle);
+    } catch {
+      showToast('Impossible de retirer l’entrée du navigateur.');
+      return;
+    }
+    brouillonIllisible = false;
+    actions.remove();
+    afficherErreurBrouillon();
+    if (brouillonNonSauvegarde) sauvegarderBrouillon();
+  };
+  actions.append(texte, copie, retirer);
+  panneau.after(actions);
 }
 
 function afficherErreurBrouillon(message = '') {

@@ -1265,6 +1265,11 @@ function sauvegarderBrouillon() {
       paraIdCounter
     };
     const stock = lireBrouillons();
+    if (stock.listeIllisible) {
+      brouillonNonSauvegarde = true;
+      afficherErreurBrouillon(messageLectureBrouillons(stock));
+      return false;
+    }
     const { drafts } = stock;
     const idx = drafts.findIndex(d => d.sessionId === sessionId);
     if (idx === -1 && drafts.length >= MAX_DRAFTS) {
@@ -1297,6 +1302,7 @@ function lireBrouillons() {
     stock.drafts = drafts;
   } catch {
     stock.listeIllisible = true;
+    proposerRecuperationBrouillon(DRAFTS_KEY, raw, 'Liste des brouillons');
   }
 
   const ancienRaw = localStorage.getItem(ANCIEN_BROUILLON_KEY);
@@ -1308,6 +1314,7 @@ function lireBrouillons() {
     if (!ancien || !Array.isArray(ancien.paragraphes)) throw new Error();
   } catch {
     stock.ancienIllisible = true;
+    proposerRecuperationBrouillon(ANCIEN_BROUILLON_KEY, ancienRaw, 'Ancien brouillon');
     return stock;
   }
 
@@ -1390,6 +1397,51 @@ function effacerBrouillon(sid) {
 
 function actualiserBoutonBrouillons(drafts) {
   document.getElementById('btn-brouillons').style.display = drafts.some(d => d.sessionId !== sessionId) ? 'inline-flex' : 'none';
+}
+
+function proposerRecuperationBrouillon(cle, raw, titre) {
+  const id = 'recuperation-' + cle;
+  const panneau = document.getElementById('draft-error');
+  if (document.getElementById(id)) return;
+  const actions = document.createElement('div');
+  actions.id = id;
+  actions.style.padding = '0.55rem 1rem';
+  const texte = document.createElement('p');
+  texte.textContent = titre + ' illisible. Téléchargez une copie avant de retirer cette entrée.';
+  const copie = document.createElement('button');
+  copie.type = 'button';
+  copie.textContent = 'Télécharger une copie';
+  const retirer = document.createElement('button');
+  retirer.type = 'button';
+  retirer.textContent = 'Retirer l’entrée illisible';
+  retirer.disabled = true;
+  copie.onclick = () => {
+    const url = URL.createObjectURL(new Blob([raw], { type: 'application/octet-stream' }));
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = cle + '_illisible.txt';
+    lien.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    retirer.disabled = false;
+  };
+  retirer.onclick = () => {
+    if (!confirm('Avez-vous vérifié la copie téléchargée ? Confirmez pour retirer cette entrée du navigateur.')) return;
+    try {
+      if (localStorage.getItem(cle) !== raw) {
+        showToast('L’entrée a changé. Copiez vos notes en cours avant de recharger la page.');
+        return;
+      }
+      localStorage.removeItem(cle);
+    } catch {
+      showToast('Impossible de retirer l’entrée du navigateur.');
+      return;
+    }
+    actions.remove();
+    afficherErreurBrouillon();
+    if (brouillonNonSauvegarde) sauvegarderBrouillon();
+  };
+  actions.append(texte, copie, retirer);
+  panneau.after(actions);
 }
 
 function afficherErreurBrouillon(message = '') {
